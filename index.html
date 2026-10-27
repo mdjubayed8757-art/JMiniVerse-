@@ -2839,18 +2839,37 @@
     });
 
     // App Initialization
-    window.addEventListener("DOMContentLoaded", () => {
-      loadAppState();
-      applySettingsToUI();
-      renderProducts();
-      updateCartUI();
-      renderCustomerOrdersView();
+     window.addEventListener('DOMContentLoaded', () => {
+    const activeFbConfig = EMBEDDED_FIREBASE_CONFIG || safeGetStorage(STORAGE_KEYS.FIREBASE_CONFIG, null);
+    if (activeFbConfig && activeFbConfig.apiKey && activeFbConfig.apiKey !== "AIzaSy...") {
+        try {
+            initFirebase(activeFbConfig, false);
+            if (typeof firebaseDb !== 'undefined' && firebaseDb) {
+                firebaseDb.ref('miniverse_store').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        if (data.products) safeSetStorage(STORAGE_KEYS.PRODUCTS, data.products);
+                        if (data.settings) safeSetStorage(STORAGE_KEYS.SETTINGS, data.settings);
+                        if (data.orders) safeSetStorage(STORAGE_KEYS.ORDERS, data.orders);
+                    }
+                    loadAppState();
+                    applySettingsToUI();
+                    renderProducts();
+                    updateCartUI();
+                    renderCustomerOrdersView();
+                });
+            }
+        } catch (e) {
+            console.error("Auto-sync error:", e);
+        }
+    }
+    loadAppState();
+    applySettingsToUI();
+    renderProducts();
+    updateCartUI();
+    renderCustomerOrdersView();
+});
 
-      const activeFbConfig = safeGetStorage(STORAGE_KEYS.FIREBASE_CONFIG, null) || EMBEDDED_FIREBASE_CONFIG;
-      if (activeFbConfig) {
-        initFirebase(activeFbConfig, false);
-      }
-    });
   </script>
 </body>
 </html>
