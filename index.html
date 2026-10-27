@@ -2867,6 +2867,96 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCustomerOrdersView();
 });
 
+    // Universal Auto-Sync & Admin Product Injector Fix
+document.addEventListener('DOMContentLoaded', () => {
+    const originalHandleAddNewProduct = window.handleAddNewProduct;
+    
+    // Override/Interception to ensure proper syncing on every product addition
+    window.handleAddNewProduct = async function(e) {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        
+        const nameInput = document.getElementById("newProdName");
+        const priceInput = document.getElementById("newProdPrice");
+        const stockInput = document.getElementById("newProdStock");
+        const descInput = document.getElementById("newProdDesc");
+        const fileInput = document.getElementById("newProdImgFiles");
+
+        if (!nameInput || !priceInput) {
+            if (typeof originalHandleAddNewProduct === 'function') {
+                return originalHandleAddNewProduct.apply(this, arguments);
+            }
+            return;
+        }
+
+        const name = nameInput.value.trim();
+        const price = Number(priceInput.value);
+        const stock = stockInput ? stockInput.value : "In Stock";
+        const desc = descInput ? descInput.value.trim() : "";
+
+        if (!name || isNaN(price) || price <= 0) {
+            if (typeof showCustomAlert === 'function') {
+                showCustomAlert("তথ্য দিন", "প্রোডাক্টের নাম এবং সঠিক দাম লিখুন।", "!");
+            }
+            return;
+        }
+
+        let uploadedImages = [""];
+        if (fileInput && fileInput.files && fileInput.files.length > 0 && typeof readFilesAsDataURLs === 'function') {
+            uploadedImages = await readFilesAsDataURLs(fileInput.files);
+            if (!uploadedImages || uploadedImages.length === 0) {
+                uploadedImages = [""];
+            }
+        }
+
+        const newProd = {
+            id: "prod_" + Date.now(),
+            name,
+            price,
+            stock,
+            desc: desc || "হাতে তৈরি প্রিমিয়াম মিনিয়েচার প্রোডাক্ট।",
+            images: uploadedImages
+        };
+
+        // Ensure products array exists
+        if (typeof products === 'undefined' || !Array.isArray(products)) {
+            window.products = [];
+        }
+
+        products.unshift(newProd);
+
+        // Save locally
+        if (typeof saveAppState === 'function') {
+            saveAppState();
+        } else {
+            localStorage.setItem("jm_products", JSON.stringify(products));
+        }
+
+        // Push directly to Firebase Cloud Database
+        if (typeof firebaseDb !== 'undefined' && firebaseDb) {
+            firebaseDb.ref('miniverse_store').set({
+                products: products,
+                settings: typeof storeSettings !== 'undefined' ? storeSettings : (typeof settings !== 'undefined' ? settings : {}),
+                orders: typeof orders !== 'undefined' ? orders : []
+            }).then(() => {
+                console.log("Product synced to Firebase successfully!");
+            }).catch(err => {
+                console.error("Firebase sync failed:", err);
+            });
+        }
+
+        // Refresh UI instantly
+        if (typeof renderProducts === 'function') renderProducts();
+        if (typeof renderAdminProductsTable === 'function') renderAdminProductsTable();
+        
+        const formEl = document.getElementById("addProductForm");
+        if (formEl) formEl.reset();
+
+        if (typeof showCustomAlert === 'function') {
+            showCustomAlert("নতুন প্রোডাক্ট যোগ হয়েছে!", `"${name}" সফলভাবে আপনার শপে যুক্ত হয়েছে।`, "✓");
+        }
+    };
+});
+
 
   </script>
 </body>
