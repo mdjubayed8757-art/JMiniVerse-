@@ -278,11 +278,16 @@
             <label class="block text-xs font-bold text-stone-700">Firebase Config (পাসওয়ার্ড ও ডাটা চিরস্থায়ী করতে কনফিগ পেস্ট করুন):</label>
             <span class="text-[11px] text-stone-400">JSON বা JavaScript Object</span>
           </div>
-          <textarea id="firebaseConfigInput" rows="3" placeholder='const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  databaseURL: "https://your-project-default-rtdb.firebaseio.com",
-  projectId: "your-project"
-};' class="w-full font-mono text-xs bg-wood-50 border border-wood-200 p-3 rounded-xl focus:outline-none focus:border-amber-500"></textarea>
+           <textarea id="firebaseConfigInput" rows="7" class="w-full font-mono text-xs bg-wood-50 border border-wood-200 p-3 rounded-xl focus:outline-none focus:border-amber-500">const firebaseConfig = {
+  apiKey: "AIzaSyCXbX-5xOC8-STUxTtYseoAAJsWscWzV0I",
+  authDomain: "jubayers-miniverse.firebaseapp.com",
+  databaseURL: "https://jubayers-miniverse-default-rtdb.firebaseio.com",
+  projectId: "jubayers-miniverse",
+  storageBucket: "jubayers-miniverse.firebasestorage.app",
+  messagingSenderId: "758300097563",
+  appId: "1:758300097563:web:b428e371b90b27dc2a4cbe",
+  measurementId: "G-BJLPW7RY6Q"
+};</textarea>
 
           <div class="flex flex-wrap gap-2 pt-1">
             <button onclick="saveAndConnectFirebase()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition">
