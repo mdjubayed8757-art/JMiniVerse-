@@ -2561,6 +2561,16 @@
       };
 
       products.unshift(newProd);
+          
+      // Firebase এ ডেটা সিঙ্ক করার জন্য
+    if (typeof firebaseDb !== 'undefined' && firebaseDb) {
+        firebaseDb.ref('miniverse_store').set({
+            products: products,
+            settings: typeof settings !== 'undefined' ? settings : {},
+            orders: typeof orders !== 'undefined' ? orders : []
+        }).catch(err => console.error("Firebase save error:", err));
+    }
+
       saveAppState();
       renderProducts();
       renderAdminProductsTable();
