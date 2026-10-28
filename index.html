@@ -440,6 +440,49 @@
         </div>
       </div>
 
+      <!-- Telegram Bot Realtime Order Notification Setup Card -->
+      <div class="bg-white p-5 rounded-2xl border border-wood-200 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-wood-100 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-lg shadow-sm">✈️</div>
+            <div>
+              <h3 class="font-bold text-sm text-wood-950">টেলিগ্রাম বট রিয়েলটাইম নোটিফিকেশন</h3>
+              <p class="text-[11px] text-stone-500">গ্রাহক অর্ডার কনফার্ম করলেই সাথে সাথে আপনার টেলিগ্রাম বটে স্বয়ংক্রিয় নোটিফিকেশন চলে যাবে।</p>
+            </div>
+          </div>
+          <label class="flex items-center gap-2 cursor-pointer bg-wood-50 px-3 py-1.5 rounded-xl border border-wood-200 text-xs font-semibold text-stone-700 select-none">
+            <input type="checkbox" id="adminTelegramEnabled" class="rounded accent-emerald-600 w-4 h-4 cursor-pointer">
+            <span>নোটিফিকেশন সক্রিয় রাখুন</span>
+          </label>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div>
+            <label class="block text-stone-700 font-bold mb-1">টেলিগ্রাম বট টোকেন (Bot Token)</label>
+            <input type="text" id="adminTelegramToken" placeholder="যেমন: 9197684555:AAEq2eexM4nWsiQiUTB29-vwZhAvS4qHWp8" class="w-full bg-wood-50 border border-wood-200 p-2.5 rounded-xl font-mono text-xs text-stone-800">
+            <span class="text-[10px] text-stone-400 mt-1 block">বটফাদার (BotFather) থেকে প্রাপ্ত টোকেন</span>
+          </div>
+          <div>
+            <label class="block text-stone-700 font-bold mb-1">টেলিগ্রাম চ্যাট আইডি (Chat ID)</label>
+            <input type="text" id="adminTelegramChatId" placeholder="যেমন: 7106405503" class="w-full bg-wood-50 border border-wood-200 p-2.5 rounded-xl font-mono text-xs text-stone-800">
+            <span class="text-[10px] text-stone-400 mt-1 block">আপনার ব্যক্তিগত চ্যাট বা গ্রুপের আইডি</span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5 pt-1">
+          <button type="button" onclick="saveTelegramSettings()" class="bg-wood-800 hover:bg-wood-900 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-sm">
+            💾 টেলিগ্রাম সেটিংস সেভ করুন
+          </button>
+          <button type="button" onclick="testTelegramNotification()" class="bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-sm flex items-center gap-1.5">
+            <span>📢</span> টেস্ট নোটিফিকেশন পাঠান
+          </button>
+          <a href="https://t.me/" target="_blank" rel="noopener noreferrer" class="text-sky-700 hover:underline text-xs ml-auto flex items-center gap-1">
+            <span>↗</span> টেলিগ্রাম অ্যাপে যান
+          </a>
+        </div>
+      </div>
+
+
       <!-- Product Management Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-wood-200 shadow-sm">
@@ -768,7 +811,10 @@
       facebook: "https://facebook.com",
       rajshahiCharge: 60,
       outsideCharge: 110,
-      nextOrderNum: 3
+      nextOrderNum: 3,
+      telegramToken: "9197684555:AAEq2eexM4nWsiQiUTB29-vwZhAvS4qHWp8",
+      telegramChatId: "7106405503",
+      telegramEnabled: true
     };
 
     const DEFAULT_PRODUCTS = [
@@ -948,6 +994,9 @@
       } else {
         storeSettings = { ...DEFAULT_SETTINGS };
       }
+      if (!storeSettings.telegramToken) storeSettings.telegramToken = DEFAULT_SETTINGS.telegramToken;
+      if (!storeSettings.telegramChatId) storeSettings.telegramChatId = DEFAULT_SETTINGS.telegramChatId;
+      if (storeSettings.telegramEnabled === undefined) storeSettings.telegramEnabled = DEFAULT_SETTINGS.telegramEnabled;
 
       const savedProducts = safeGetStorage(STORAGE_KEYS.PRODUCTS, null);
       if (Array.isArray(savedProducts) && savedProducts.length > 0) {
@@ -1473,6 +1522,13 @@
       document.getElementById("adminWhatsappInput").value = storeSettings.whatsapp;
       document.getElementById("adminFacebookInput").value = storeSettings.facebook;
 
+      const telTokenEl = document.getElementById("adminTelegramToken");
+      if (telTokenEl) telTokenEl.value = storeSettings.telegramToken || DEFAULT_SETTINGS.telegramToken;
+      const telChatEl = document.getElementById("adminTelegramChatId");
+      if (telChatEl) telChatEl.value = storeSettings.telegramChatId || DEFAULT_SETTINGS.telegramChatId;
+      const telEnabledEl = document.getElementById("adminTelegramEnabled");
+      if (telEnabledEl) telEnabledEl.checked = storeSettings.telegramEnabled !== undefined ? storeSettings.telegramEnabled : DEFAULT_SETTINGS.telegramEnabled;
+
       updatePaymentMethodNotice();
       updateAdminPassDisplay();
     }
@@ -1490,10 +1546,115 @@
       if (!isNaN(raj) && raj >= 0) storeSettings.rajshahiCharge = raj;
       if (!isNaN(out) && out >= 0) storeSettings.outsideCharge = out;
 
+      const telTokenEl = document.getElementById("adminTelegramToken");
+      if (telTokenEl) storeSettings.telegramToken = telTokenEl.value.trim() || DEFAULT_SETTINGS.telegramToken;
+      const telChatEl = document.getElementById("adminTelegramChatId");
+      if (telChatEl) storeSettings.telegramChatId = telChatEl.value.trim() || DEFAULT_SETTINGS.telegramChatId;
+      const telEnabledEl = document.getElementById("adminTelegramEnabled");
+      if (telEnabledEl) storeSettings.telegramEnabled = telEnabledEl.checked;
+
       saveAppState();
       applySettingsToUI();
       showCustomAlert("সেটিংস সেভ হয়েছে!", "স্টোরের তথ্য, ডেলিভারি চার্জ ও পেমেন্ট নম্বর সফলভাবে আপডেট হয়েছে।", "✓");
     }
+    function saveTelegramSettings() {
+      const token = (document.getElementById("adminTelegramToken").value || "").trim();
+      const chatId = (document.getElementById("adminTelegramChatId").value || "").trim();
+      const isEnabled = document.getElementById("adminTelegramEnabled").checked;
+
+      storeSettings.telegramToken = token || DEFAULT_SETTINGS.telegramToken;
+      storeSettings.telegramChatId = chatId || DEFAULT_SETTINGS.telegramChatId;
+      storeSettings.telegramEnabled = isEnabled;
+
+      saveAppState();
+      showCustomAlert("টেলিগ্রাম সেটিংস সংরক্ষিত!", "বট টোকেন এবং চ্যাট আইডি সফলভাবে সংরক্ষণ ও ক্লাউডে সিঙ্ক করা হয়েছে।", "✓");
+    }
+
+    function escapeHtmlForTelegram(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    async function sendTelegramOrderNotification(order) {
+      try {
+        const token = (storeSettings && storeSettings.telegramToken) || DEFAULT_SETTINGS.telegramToken;
+        const chatId = (storeSettings && storeSettings.telegramChatId) || DEFAULT_SETTINGS.telegramChatId;
+        const isEnabled = storeSettings && storeSettings.telegramEnabled !== undefined ? storeSettings.telegramEnabled : DEFAULT_SETTINGS.telegramEnabled;
+
+        if (!isEnabled || !token || !chatId) {
+          console.log("Telegram notification is disabled or credentials missing.");
+          return;
+        }
+
+        const itemsList = (order.items || []).map((item, idx) => {
+          return `${idx + 1}. <b>${escapeHtmlForTelegram(item.name)}</b>\n   পরিমাণ: ${item.qty} টি | মূল্য: ৳${item.price * item.qty}`;
+        }).join("\n");
+
+        const messageText = `🛒 <b>নতুন অর্ডার অ্যালার্ট! - Jubayer\'s MiniVerse</b>\n━━━━━━━━━━━━━━━━━━━━\n🆔 <b>অর্ডার আইডি:</b> <code>${escapeHtmlForTelegram(order.id)}</code>\n📅 <b>অর্ডারের সময়:</b> ${escapeHtmlForTelegram(order.createdAt)}\n\n👤 <b>গ্রাহকের বিবরণ:</b>\n• <b>নাম:</b> ${escapeHtmlForTelegram(order.custName)}\n• <b>মোবাইল:</b> <code>${escapeHtmlForTelegram(order.custPhone)}</code>\n• <b>ঠিকানা:</b> ${escapeHtmlForTelegram(order.custAddress)}\n• <b>এলাকা:</b> ${escapeHtmlForTelegram(order.locationLabel)}\n\n🛍️ <b>অর্ডারকৃত পণ্যসমূহ:</b>\n${itemsList || "কোনো পণ্য পাওয়া যায়নি"}\n\n💳 <b>পেমেন্ট তথ্য:</b>\n• <b>মাধ্যম:</b> ${escapeHtmlForTelegram(order.paymentMethod)}\n${order.trxId ? `• <b>TrxID:</b> <code>${escapeHtmlForTelegram(order.trxId)}</code>\n` : ''}• <b>পেমেন্ট স্ট্যাটাস:</b> ${escapeHtmlForTelegram(order.paymentStatus || 'Pending')}\n\n💰 <b>বিল বিবরণী:</b>\n• সাবটোটাল: ৳${order.subTotal}\n• ডেলিভারি চার্জ: ৳${order.deliveryCharge}\n• <b>সর্বমোট বিল: ৳${order.grandTotal}</b>\n━━━━━━━━━━━━━━━━━━━━\n📦 <i>অর্ডারটি প্রসেস করতে দ্রুত গ্রাহকের সাথে যোগাযোগ করুন।</i>`;
+
+        const response = await fetch(`https://api.telegram.org/bot${token.trim()}/sendMessage`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            chat_id: chatId.trim(),
+            text: messageText,
+            parse_mode: "HTML"
+          })
+        });
+
+        const data = await response.json();
+        if (!data.ok) {
+          console.warn("Telegram API Error response:", data);
+        } else {
+          console.log("Telegram order notification sent successfully!");
+        }
+        return data;
+      } catch (error) {
+        console.error("Failed to send Telegram notification in background:", error);
+      }
+    }
+
+    async function testTelegramNotification() {
+      const token = (document.getElementById("adminTelegramToken").value || "").trim() || storeSettings.telegramToken || DEFAULT_SETTINGS.telegramToken;
+      const chatId = (document.getElementById("adminTelegramChatId").value || "").trim() || storeSettings.telegramChatId || DEFAULT_SETTINGS.telegramChatId;
+
+      if (!token || !chatId) {
+        showCustomAlert("তথ্য অসম্পূর্ণ!", "অনুগ্রহ করে Bot Token এবং Chat ID উভয় ফিল্ড পূরণ করুন।", "!");
+        return;
+      }
+
+      showCustomAlert("মেসেজ পাঠানো হচ্ছে...", "টেলিগ্রাম বটে টেস্ট বার্তা পাঠানো হচ্ছে, দয়া করে অপেক্ষা করুন...", "⏳");
+
+      const testMsg = `🔔 <b>টেস্ট নোটিফিকেশন - Jubayer\'s MiniVerse</b>\n━━━━━━━━━━━━━━━━━━━━\n✅ <b>অভিনন্দন!</b> আপনার টেলিগ্রাম বট সফলভাবে কানেক্ট হয়েছে।\n🛒 এখন থেকে আপনার অনলাইন স্টোরে কোনো কাস্টমার অর্ডার প্লেস করলেই স্বয়ংক্রিয়ভাবে তার সকল তথ্য, ঠিকানা ও অর্ডার বিবরণ এই বটে চলে আসবে।\n\n⏰ টেস্ট প্রেরণের সময়: ${new Date().toLocaleString("bn-BD")}`;
+
+      try {
+        const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: testMsg,
+            parse_mode: "HTML"
+          })
+        });
+        const data = await response.json();
+        if (data.ok) {
+          showCustomAlert("সফল হয়েছে!", "আপনার টেলিগ্রাম বটে টেস্ট নোটিফিকেশন পৌঁছে গেছে! আপনার টেলিগ্রাম অ্যাপ চেক করুন।", "✓");
+        } else {
+          showCustomAlert("ব্যর্থ হয়েছে!", `টেলিগ্রাম এরর: ${data.description || "বট টোকেন বা চ্যাট আইডি সঠিক নয়"}`, "✕");
+        }
+      } catch (err) {
+        showCustomAlert("কানেকশন এরর!", "টেলিগ্রাম সার্ভারের সাথে সংযোগ স্থাপন করা যায়নি। ব্রাউজারের ইন্টারনেট সংযোগ চেক করুন।", "✕");
+      }
+    }
+
 
     // Render Products for Shop View
     function renderProducts() {
@@ -1786,6 +1947,9 @@
       document.getElementById("successModalText").textContent =
         `সর্বমোট বিল: ৳${grandTotal} (${paymentMethod})। খুব শীঘ্রই আমাদের প্রতিনিধি ডেলিভারির বিষয়ে আপনার নাম্বারে যোগাযোগ করবেন। আপনার অর্ডারটি ট্র্যাক করতে নিচের বাটনে চাপ দিন।`;
       document.getElementById("successModal").classList.remove("hidden");
+
+      // Send automated background Telegram Bot notification
+      sendTelegramOrderNotification(newOrder);
     }
 
     // Cash Memo Modal Management (Screenshot 59555)
@@ -2971,57 +3135,6 @@
         initFirebase(activeFbConfig, false);
       }
     });
-    // ─── TELEGRAM NOTIFICATION SCRIPT ───
-const TELEGRAM_BOT_TOKEN = "9197684555:AAEq2eexM4nWsiQiUTB29-vwZhAvS4qHWp8";
-const TELEGRAM_CHAT_ID = "7106405503";
-
-async function sendTelegramOrderNotification(orderData) {
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
-
-    const message = `🚨 নতুন অর্ডার এসেছে!\n\n` +
-                    `📦 অর্ডার আইডি: ${orderData.orderId || 'N/A'}\n` +
-                    `👤 কাস্টমার: ${orderData.name || orderData.customerName || 'N/A'}\n` +
-                    `📞 ফোন: ${orderData.phone || orderData.customerPhone || 'N/A'}\n` +
-                    `📍 ঠিকানা: ${orderData.address || orderData.shippingAddress || 'N/A'}\n` +
-                    `💰 মোট বিল: ৳${orderData.total || orderData.finalTotal || 0}\n` +
-                    `🛍️ পেমেন্ট মাধ্যম: ${orderData.paymentMethod || 'COD'}`;
-
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-
-    try {
-        await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: TELEGRAM_CHAT_ID,
-                text: message,
-                parse_mode: 'Markdown'
-            })
-        });
-    } catch (error) {
-        console.error("Telegram notification error:", error);
-    }
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        if (typeof window.saveOrder === 'function') {
-            const nativeSave = window.saveOrder;
-            window.saveOrder = function(...args) {
-                const res = nativeSave.apply(this, args);
-                setTimeout(() => {
-                    try {
-                        const orders = JSON.parse(localStorage.getItem('jm_orders') || '[]');
-                        if (orders.length > 0) {
-                            sendTelegramOrderNotification(orders[0]);
-                        }
-                    } catch(e) {}
-                }, 500);
-                return res;
-            };
-        }
-    }, 1000);
-});
   </script>
 </body>
 </html>
