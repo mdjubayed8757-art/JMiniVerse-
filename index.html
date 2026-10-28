@@ -2971,6 +2971,57 @@
         initFirebase(activeFbConfig, false);
       }
     });
+    // ─── TELEGRAM NOTIFICATION SCRIPT ───
+const TELEGRAM_BOT_TOKEN = "9197684555:AAEq2eexM4nWsiQiUTB29-vwZhAvS4qHWp8";
+const TELEGRAM_CHAT_ID = "7106405503";
+
+async function sendTelegramOrderNotification(orderData) {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+
+    const message = `🚨 নতুন অর্ডার এসেছে!\n\n` +
+                    `📦 অর্ডার আইডি: ${orderData.orderId || 'N/A'}\n` +
+                    `👤 কাস্টমার: ${orderData.name || orderData.customerName || 'N/A'}\n` +
+                    `📞 ফোন: ${orderData.phone || orderData.customerPhone || 'N/A'}\n` +
+                    `📍 ঠিকানা: ${orderData.address || orderData.shippingAddress || 'N/A'}\n` +
+                    `💰 মোট বিল: ৳${orderData.total || orderData.finalTotal || 0}\n` +
+                    `🛍️ পেমেন্ট মাধ্যম: ${orderData.paymentMethod || 'COD'}`;
+
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: message,
+                parse_mode: 'Markdown'
+            })
+        });
+    } catch (error) {
+        console.error("Telegram notification error:", error);
+    }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if (typeof window.saveOrder === 'function') {
+            const nativeSave = window.saveOrder;
+            window.saveOrder = function(...args) {
+                const res = nativeSave.apply(this, args);
+                setTimeout(() => {
+                    try {
+                        const orders = JSON.parse(localStorage.getItem('jm_orders') || '[]');
+                        if (orders.length > 0) {
+                            sendTelegramOrderNotification(orders[0]);
+                        }
+                    } catch(e) {}
+                }, 500);
+                return res;
+            };
+        }
+    }, 1000);
+});
   </script>
 </body>
 </html>
